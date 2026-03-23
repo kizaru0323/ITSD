@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITSD Tracker - Data Flow Diagram</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-navy: #112d42;
+            --accent-yellow: #f6e05e;
+            --accent-yellow-dark: #d69e2e;
+            --bg-neutral: #f8fafc;
+            --border-glass: rgba(255, 255, 255, 0.4);
+            --shadow-premium: 0 30px 60px -12px rgba(17, 45, 66, 0.15);
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            padding: 80px 20px;
+            background-color: var(--bg-neutral);
+            color: var(--primary-navy);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .doc-header {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 16px;
+            background: var(--primary-navy);
+            color: var(--accent-yellow);
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 20px rgba(17, 45, 66, 0.1);
+        }
+
+        .doc-header h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -0.04em;
+            color: var(--primary-navy);
+        }
+
+        .doc-header p {
+            color: #64748b;
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 15px auto 0;
+        }
+
+        .section-card {
+            background: #ffffff;
+            border-radius: 40px;
+            padding: 80px;
+            margin-bottom: 80px;
+            box-shadow: var(--shadow-premium);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 8px;
+            height: 100%;
+            background: var(--primary-navy);
+        }
+
+        .section-card.level-1::before {
+            background: var(--accent-yellow-dark);
+        }
+
+        .section-title {
+            margin-bottom: 60px;
+        }
+
+        .section-title h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .section-title h2 .id-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            background: var(--primary-navy);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 8px;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            padding-bottom: 50px;
+        }
+
+        .flow-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 40px;
+            margin-top: 60px;
+            border-top: 2px dashed #e2e8f0;
+            padding-top: 60px;
+        }
+
+        .detail-block h3 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            color: var(--primary-navy);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .detail-block ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .detail-block li {
+            position: relative;
+            padding-left: 24px;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+            color: #475569;
+        }
+
+        .detail-block li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--accent-yellow-dark);
+            font-weight: 800;
+        }
+
+        .data-store-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 40px;
+        }
+
+        .ds-pill {
+            background: var(--primary-navy);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        footer {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.9rem;
+            padding: 40px 0;
+        }
+
+        @media (max-width: 768px) {
+            .section-card { padding: 40px 20px; }
+            .doc-header h1 { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="doc-header">
+            <div class="badge">Documentation</div>
+            <h1>System Flow Diagrams</h1>
+            <p>A simple look at how data moves within the ITSD Tracker System</p>
+        </header>
+
+        <!-- DFD LEVEL 0 -->
+        <div class="section-card">
+            <div class="section-title">
+                <h2><span class="id-tag">Overall View</span> Level 0: Context Diagram</h2>
+                <p>This shows the main system and how different users interact with it.</p>
+            </div>
+            <div class="mermaid">
+                graph LR
+                    STAFF[STAFF / SUBMITTER]
+                    ADMIN[ADMIN / MANAGER]
+                    USER[ASSIGNEE / WORKER]
+                    SYSTEM((ITSD TRACKER SYSTEM))
+
+                    STAFF -- "Sends Request<br/>(Subject, Details, Files)" --> SYSTEM
+                    SYSTEM -- "Gives Tracking ID" --> STAFF
+                    SYSTEM -- "Sends Feedback<br/>(Approved / Declined)" --> STAFF
+
+                    SYSTEM -- "Shows New Requests" --> ADMIN
+                    ADMIN -- "Approval Action<br/>(Approve / Decline / Return)" --> SYSTEM
+                    ADMIN -- "Manages Users" --> SYSTEM
+
+                    SYSTEM -- "Sends Assigned Tasks" --> USER
+                    USER -- "Marks Task as Finished" --> SYSTEM
+
+                    style SYSTEM fill:#112d42,color:#fff,stroke:#112d42,stroke-width:5px
+                    style STAFF fill:#fff,stroke:#112d42,stroke-width:2px
+                    style ADMIN fill:#fff,stroke:#112d42,stroke-width:2px
+                    style USER fill:#fff,stroke:#112d42,stroke-width:2px
+            </div>
+        </div>
+
+        <!-- DFD LEVEL 1 -->
+        <div class="section-card level-1">
+            <div class="section-title">
+                <h2><span class="id-tag">Inside the System</span> Level 1: System Breakdown</h2>
+                <p>This shows the internal steps the system takes to handle data.</p>
+            </div>
+            <div class="mermaid">
+                graph TD
+                    %% Users
+                    E1[STAFF]
+                    E2[ADMIN]
+                    E3[WORKER]
+
+                    %% Processes
+                    P1((1.0 User Login))
+                    P2((2.0 Creating Records))
+                    P3((3.0 Approval & Review))
+                    P4((4.0 Task Completion))
+                    P5((5.0 Notifications))
+                    P6((6.0 Activity Logs))
+
+                    %% Databases
+                    D1[(D1: Users Database)]
+                    D2[(D2: Permissions)]
+                    D3[(D3: Communications Database)]
+                    D4[(D4: Notifications Database)]
+                    D5[(D5: Logs Database)]
+
+                    %% Flows
+                    E1 -- "Login Info" --> P1
+                    P1 -- "Check Info" --> D1
+                    P1 -- "Check Access" --> D2
+                    P1 -- "Access Token" --> E1
+
+                    E1 -- "Entry Details" --> P2
+                    P2 -- "Save Record" --> D3
+                    P2 -- "Record Entry" --> P6
+
+                    E2 -- "Decision & Remarks" --> P3
+                    P3 -- "Update Record" --> D3
+                    P3 -- "Trigger Alert" --> P5
+
+                    P5 -- "Save Alerts" --> D4
+                    P5 -- "Send Alert to Staff" --> E1
+                    P5 -- "Send Task to Worker" --> E3
+
+                    E3 -- "View Tasks" --> P4
+                    P4 -- "Read Records" --> D3
+                    E3 -- "Finish Task" --> P4
+                    P4 -- "Update Status" --> D3
+                    P4 -- "Completion Alert" --> P5
+
+                    P6 -- "Save Logs" --> D5
+                    D3 -- "System Stats" --> P6
+                    P6 -- "Show Reports" --> E2
+
+                    style P1 fill:#fcfcfc,stroke:#112d42,stroke-dasharray: 5 5
+                    style P2 fill:#fcfcfc,stroke:#112d42,stroke-dasharray: 5 5
+                    style P3 fill:#fcfcfc,stroke:#112d42,stroke-dasharray: 5 5
+                    style P4 fill:#fcfcfc,stroke:#112d42,stroke-dasharray: 5 5
+                    style P5 fill:#fcfcfc,stroke:#112d42,stroke-dasharray: 5 5
+                    style P6 fill:#fcfcfc,stroke:#112d42,stroke-dasharray: 5 5
+                    
+                    style D1 fill:#112d42,color:#fff
+                    style D2 fill:#112d42,color:#fff
+                    style D3 fill:#112d42,color:#fff
+                    style D4 fill:#112d42,color:#fff
+                    style D5 fill:#112d42,color:#fff
+            </div>
+
+            <div class="flow-details">
+                <div class="detail-block">
+                    <h3>Submitting Data</h3>
+                    <ul>
+                        <li><b>Staff Entry</b>: Subject, Priority, Office, and Category.</li>
+                        <li><b>Uploads</b>: Files sent during the submission process.</li>
+                        <li><b>Admin Inputs</b>: Approval decisions and feedback remarks.</li>
+                    </ul>
+                </div>
+                <div class="detail-block">
+                    <h3>System Logic</h3>
+                    <ul>
+                        <li><b>Process 2.0</b>: Automatically makes a unique Tracking ID.</li>
+                        <li><b>Process 3.0</b>: Moves the status from Pending to Approved or Declined.</li>
+                        <li><b>Process 4.0</b>: Moves the status from Approved to Completed.</li>
+                    </ul>
+                </div>
+                <div class="detail-block">
+                    <h3>Saving Information</h3>
+                    <ul>
+                        <li><b>Communications Database</b>: Where all task history is kept.</li>
+                        <li><b>Logs Database</b>: A history of everything that happens (Who did What).</li>
+                        <li><b>Notifications Database</b>: Keeps track of all messages sent to users.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="data-store-list">
+                <div class="ds-pill">D1: USER_ACCOUNTS</div>
+                <div class="ds-pill">D2: USER_ACCESS</div>
+                <div class="ds-pill">D3: TASK_RECORDS</div>
+                <div class="ds-pill">D4: SENT_ALERTS</div>
+                <div class="ds-pill">D5: SYSTEM_LOGS</div>
+            </div>
+        </div>
+
+        <footer>
+            &copy; 2026 ITSD Tracker Documentation
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'base',
+            securityLevel: 'loose',
+            themeVariables: {
+                primaryColor: '#ffffff',
+                primaryTextColor: '#112d42',
+                primaryBorderColor: '#112d42',
+                lineColor: '#112d42',
+                secondaryColor: '#f1f5f9',
+                tertiaryColor: '#ffffff',
+                fontFamily: 'Outfit'
+            }
+        });
+    </script>
+</body>
+</html>

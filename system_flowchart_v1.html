@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITSD Tracker - Official System Flowchart</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --navy: #112d42;
+            --yellow: #f6e05e;
+            --slate: #f8fafc;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            padding: 50px 20px;
+            background-color: var(--slate);
+            color: var(--navy);
+            background-image: 
+                radial-gradient(circle at 100% 0%, rgba(246, 224, 94, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 0% 100%, rgba(17, 45, 66, 0.05) 0%, transparent 40%);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -0.04em;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: #64748b;
+            margin-top: 10px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 40px;
+            padding: 60px;
+            box-shadow: 0 40px 80px -20px rgba(17, 45, 66, 0.15);
+            border: 1px solid var(--border);
+            margin-bottom: 50px;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+
+        .explanation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+            border-top: 2px dashed var(--border);
+            padding-top: 50px;
+        }
+
+        .step-item {
+            display: flex;
+            gap: 15px;
+        }
+
+        .step-num {
+            background: var(--navy);
+            color: var(--yellow);
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+
+        .step-content h3 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            margin: 0 0 8px 0;
+        }
+
+        .step-content p {
+            font-size: 0.9rem;
+            color: #475569;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .actor-legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .color-box {
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .card { padding: 30px 15px; }
+            .header h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div style="display:inline-block; padding: 6px 16px; background: var(--navy); color: var(--yellow); border-radius: 100px; font-weight: 800; font-size: 0.7rem; letter-spacing: 0.15em; margin-bottom: 20px;">SYSTEM ARCHITECTURE</div>
+            <h1>ITSD Tracker Workflow Flowchart</h1>
+            <p>Formal Step-by-Step Visualization of System Operations</p>
+        </header>
+
+        <div class="card">
+            <div class="mermaid">
+                flowchart TD
+                    %% Start/End
+                    START([START: User Access])
+                    FINISH([END: Cycle Complete])
+
+                    %% Processes
+                    P1[1. User Login & Authentication]
+                    P2[2. New Communication Submission]
+                    P3{3. Admin Review}
+                    P4[4. Task Assigned to Assignee]
+                    P5[5. Record Returned to Staff]
+                    P6[6. Record Declined/Closed]
+                    P7[7. Performance of Task]
+                    P8[8. Mark Task as COMPLETED]
+                    P9[9. Stakeholder Notifications]
+
+                    %% Flow
+                    START --> P1
+                    P1 --> P2
+                    P2 --> P3
+
+                    %% Decision Paths
+                    P3 -- APPROVE --> P4
+                    P3 -- RETURN --> P5
+                    P3 -- DECLINE --> P6
+
+                    %% Return Flow
+                    P5 --> P2
+
+                    %% Execution Flow
+                    P4 --> P7
+                    P7 --> P8
+                    P8 --> P9
+                    P9 --> FINISH
+                    P6 --> FINISH
+
+                    %% Styling
+                    style START fill:#112d42,color:#fff,stroke:#112d42
+                    style FINISH fill:#112d42,color:#fff,stroke:#112d42
+                    style P1 fill:#f8fafc,stroke:#112d42,stroke-width:2px
+                    style P2 fill:#f8fafc,stroke:#112d42,stroke-width:2px
+                    style P3 fill:#f6e05e,stroke:#112d42,stroke-width:3px,color:#112d42
+                    style P4 fill:#f8fafc,stroke:#112d42,stroke-width:2px
+                    style P5 fill:#f8fafc,stroke:#112d42,stroke-width:2px
+                    style P6 fill:#f8fafc,stroke:#112d42,stroke-width:2px
+                    style P7 fill:#f8fafc,stroke:#112d42,stroke-width:2px
+                    style P8 fill:#f8fafc,stroke:#112d42,stroke-width:2px
+                    style P9 fill:#f8fafc,stroke:#112d42,stroke-width:2px
+            </div>
+
+            <div class="actor-legend">
+                <div class="legend-item"><div class="color-box" style="background:#f8fafc; border:1.5px solid #112d42;"></div> PROCESS</div>
+                <div class="legend-item"><div class="color-box" style="background:#f6e05e; border:1.5px solid #112d42;"></div> DECISION</div>
+                <div class="legend-item"><div class="color-box" style="background:#112d42;"></div> START/END</div>
+            </div>
+
+            <div class="explanation-grid">
+                <div class="step-item">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <h3>Login & Authentication</h3>
+                        <p>User enters the system. Identity is verified and role headers are established (Admin, Staff, or User).</p>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <h3>Submission</h3>
+                        <p>Staff creates a new record by filling metadata and uploading files. Unique Tracking ID is generated.</p>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <h3>Admin Review</h3>
+                        <p>The core decision point where the Admin chooses to Approve, Return for correction, or Decline the request.</p>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-num">4</div>
+                    <div class="step-content">
+                        <h3>Task Assignment</h3>
+                        <p>Upon approval, the system dispatches the record to the Assignee's portal and sends a notification alert.</p>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-num">5</div>
+                    <div class="step-content">
+                        <h3>Execution & Completion</h3>
+                        <p>The Assignee performs the work and marks it as finished. All stakeholders are then notified of the final status.</p>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-num">6</div>
+                    <div class="step-content">
+                        <h3>Archive & Audit</h3>
+                        <p>The workflow ends with the record stored in the history for analytics, reporting, and future audits.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer style="text-align:center; padding: 20px; color: #94a3b8; font-size: 0.8rem;">
+            &copy; 2026 ITSD Tracker Technical Specification &bull; System Lifecycle Flow
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#ffffff',
+                primaryTextColor: '#112d42',
+                primaryBorderColor: '#112d42',
+                lineColor: '#112d42',
+                secondaryColor: '#f6e05e',
+                tertiaryColor: '#ffffff',
+                fontFamily: 'Plus Jakarta Sans'
+            }
+        });
+    </script>
+</body>
+</html>

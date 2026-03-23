@@ -1,0 +1,90 @@
+
+/* ── Universal Modern Modal System ── */
+.modern-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+.modern-modal {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 32px;
+  width: auto;
+  min-width: 400px;
+  max-width: 90vw;
+  box-shadow: 
+    0 20px 50px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modern-modal-header {
+  padding: 24px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.modern-modal-header h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--primary-navy);
+  letter-spacing: -0.02em;
+}
+
+.modern-modal-body {
+  padding: 32px;
+  overflow-y: auto;
+  max-height: 80vh;
+}
+
+.modern-modal-footer {
+  padding: 24px 32px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.02);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Modal Helper Classes */
+.animate-zoom-in {
+  animation: modalZoom 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+@keyframes modalZoom {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.close-btn-modern {
+  background: rgba(15, 23, 42, 0.05);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.close-btn-modern:hover {
+  background: #fee2e2;
+  color: #ef4444;
+  transform: rotate(90deg);
+}

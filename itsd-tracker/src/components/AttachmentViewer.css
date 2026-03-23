@@ -1,0 +1,284 @@
+/* Attachment Viewer Styles */
+.av-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: av-fade-in 0.3s ease-out;
+}
+
+.av-modal {
+    width: 100vw;
+    height: 100vh;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    animation: av-zoom-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Top Bar (Floating) */
+.av-top-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 72px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    z-index: 100;
+    pointer-events: none; /* Let clicks pass through to preview if needed */
+}
+
+.av-file-name, .av-close-btn {
+    pointer-events: auto; /* Re-enable for controls */
+}
+
+.av-file-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 70%;
+}
+
+.av-close-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.av-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(90deg);
+}
+
+/* Main Preview Area (Background) */
+.av-preview-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    overflow: hidden;
+    z-index: 10;
+}
+
+.av-image-preview {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    box-shadow: 0 0 100px rgba(0, 0, 0, 0.5);
+}
+
+.av-pdf-preview {
+    width: 100%;
+    height: 100%;
+    border: none;
+    box-shadow: 0 0 100px rgba(0, 0, 0, 0.5);
+    background: #ffffff;
+}
+
+.av-unsupported {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    color: #94a3b8;
+}
+
+.av-unsupported p {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+/* Bottom Bar (Floating) */
+.av-bottom-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+    padding: 0 40px;
+    display: flex;
+    align-items: flex-end; /* Push buttons to very bottom */
+    padding-bottom: 24px;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.av-controls-right {
+    display: flex;
+    gap: 12px;
+    pointer-events: auto;
+}
+
+.av-zoom-controls {
+    position: absolute;
+    bottom: 24px;
+    left: 40px;
+    display: flex;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    padding: 6px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 150;
+    pointer-events: auto;
+}
+
+.av-zoom-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.av-btn {
+    height: 48px;
+    padding: 0 28px;
+    border-radius: 30px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    letter-spacing: 0.02em;
+}
+
+.av-btn svg {
+    transition: transform 0.3s ease;
+}
+
+.av-btn:hover svg {
+    transform: translateY(-2px);
+}
+
+.av-zoom-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+}
+
+.av-zoom-btn svg {
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.av-zoom-btn:hover svg {
+    opacity: 1;
+}
+
+.av-btn-primary {
+    background: #ffffff;
+    color: #000000;
+    box-shadow: 0 10px 20px rgba(255, 255, 255, 0.1);
+}
+
+.av-btn-primary:hover {
+    background: #ffffff;
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 15px 30px rgba(255, 255, 255, 0.2);
+}
+
+.av-btn-secondary {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.av-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-3px) scale(1.02);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.av-btn:active {
+    transform: translateY(-1px) scale(0.98);
+}
+
+/* Animations */
+@keyframes av-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes av-zoom-in {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .av-modal {
+        width: 95vw;
+        height: 85vh;
+    }
+}
+
+@media (max-width: 480px) {
+    .av-modal {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+    }
+
+    .av-top-bar {
+        padding: 0 16px;
+    }
+
+    .av-bottom-bar {
+        justify-content: center;
+        padding: 0 16px;
+    }
+
+    .av-controls-right {
+        width: 100%;
+    }
+
+    .av-btn {
+        flex: 1;
+        justify-content: center;
+    }
+}

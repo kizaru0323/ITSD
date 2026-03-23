@@ -1,0 +1,213 @@
+.user-header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.user-header-left h1 {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #1e293b;
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+
+.user-header-left p {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin: 4px 0 0;
+    font-weight: 600;
+}
+
+.user-header-right {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 1000;
+}
+
+.uh-profile-trigger {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 16px 6px 6px;
+    border-radius: 100px;
+    background: #112d42;
+    /* Official Navy */
+    border: 1px solid rgba(246, 224, 94, 0.2);
+    /* Subtle Yellow border */
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 15px rgba(17, 45, 66, 0.15);
+}
+
+.uh-profile-trigger:hover,
+.uh-profile-trigger.active {
+    border-color: #f6e05e;
+    /* Official Yellow */
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(17, 45, 66, 0.25);
+}
+
+.uh-profile-badge {
+    width: 38px;
+    height: 38px;
+    background: #f6e05e;
+    /* Official Yellow */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #112d42;
+    /* Navy text */
+    font-weight: 900;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 8px rgba(246, 224, 94, 0.3);
+}
+
+.uh-profile-label {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0;
+}
+
+.uh-user-name {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: white;
+    /* White text on dark trigger */
+    line-height: 1.1;
+}
+
+.uh-user-role {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #f6e05e;
+    /* Yellow accent for role */
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    line-height: 1.1;
+}
+
+.uh-chevron {
+    color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    align-items: center;
+    transition: transform 0.3s;
+    margin-left: 4px;
+}
+
+.uh-profile-trigger.active .uh-chevron {
+    transform: rotate(180deg);
+    color: #f6e05e;
+}
+
+/* Dropdown */
+.uh-profile-dropdown {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: 260px;
+    background: white;
+    border-radius: 20px;
+    border: 1px solid rgba(15, 23, 42, 0.05);
+    padding: 12px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+}
+
+.uh-dropdown-info {
+    padding: 12px 16px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.uh-dropdown-img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 900;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+    flex-shrink: 0;
+}
+
+.uh-dropdown-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.uh-dropdown-text .name {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.uh-dropdown-text .role {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 2px;
+}
+
+.uh-dropdown-divider {
+    height: 1px;
+    background: #f1f5f9;
+    margin: 8px 4px;
+}
+
+.uh-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: #64748b;
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    border: none;
+    background: transparent;
+    width: 100%;
+    cursor: pointer;
+    text-align: left;
+}
+
+.uh-dropdown-item:hover {
+    background: #f8fafc;
+    color: #6366f1;
+    padding-left: 20px;
+}
+
+.uh-dropdown-item.logout {
+    color: #ef4444;
+}
+
+.uh-dropdown-item.logout:hover {
+    background: #fee2e2;
+}
+
+.uh-dropdown-item svg {
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.uh-dropdown-item:hover svg {
+    opacity: 1;
+}

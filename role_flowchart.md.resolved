@@ -1,0 +1,58 @@
+# Role-Based System Flowchart
+
+This flowchart illustrates the navigation paths and feature sets available to each role within the ITSD Tracker system.
+
+```mermaid
+graph TD
+    Start((System Entry)) --> RoleSelect{Role Selection}
+
+    RoleSelect -- Admin --> AdminHome[Admin Dashboard]
+    RoleSelect -- Staff --> StaffHome[Staff Record List]
+    RoleSelect -- User --> UserHome[User Overview]
+
+    subgraph Admin_Flow [Admin Flow]
+        AdminHome --> AdminUsers[User Management]
+        AdminHome --> AdminRoles[Role & Permissions]
+        AdminHome --> AdminGroups[Group Management]
+        AdminHome --> AdminAnnounce[Announcements]
+        AdminHome --> AdminLogs[Activity Logs]
+        AdminHome --> AdminAnalytics[Detailed Analytics]
+        AdminHome --> AdminSettings[Admin Settings]
+    end
+
+    subgraph Staff_Flow [Staff Flow]
+        StaffHome --> StaffNew[New Communication]
+        StaffHome --> StaffRecords[Manage Record List]
+        StaffHome --> StaffAnalytics[Staff Analytics]
+        StaffHome --> StaffLogs[Activity Logs]
+        StaffHome --> StaffSettings[Staff Settings]
+        StaffRecords --> RowExpand[Expand Record Details]
+        RowExpand --> EditRecord[Edit Record]
+        RowExpand --> DeleteRecord[Delete Record]
+    end
+
+    subgraph User_Flow [User Flow]
+        UserHome --> UserProjects[My Projects]
+        UserHome --> UserCalendar[Communications Calendar]
+        UserHome --> UserAnalytics[Personal Analytics]
+        UserHome --> UserAnnounce[Announcements]
+        UserHome --> UserTeam[Team Management]
+        UserHome --> UserLists[My Lists]
+        UserHome --> UserSettings[User Settings]
+    end
+
+    style Admin_Flow fill:#f9f,stroke:#333,stroke-width:2px
+    style Staff_Flow fill:#bbf,stroke:#333,stroke-width:2px
+    style User_Flow fill:#bfb,stroke:#333,stroke-width:2px
+```
+
+## Flow Description
+
+### Admin Flow
+The Admin role focuses on system administration and management. They have full access to user management, roles, and system-wide settings, along with high-level analytics and logs.
+
+### Staff Flow
+The Staff role is the operational core of the system. They manage communications, create new records, and track existing ones through the Record List. They can expand records to see details and perform actions like editing or deleting.
+
+### User Flow
+The User role is geared towards end-users who need to view their projects, personal analytics, and stay updated through announcements and a calendar view of communications.

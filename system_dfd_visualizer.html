@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITSD Tracker - Final DFD (Level 0 & 1)</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-navy: #112d42;
+            --accent-yellow: #f6e05e;
+            --bg-glass: rgba(255, 255, 255, 0.95);
+            --border-soft: #e2e8f0;
+            --text-main: #1e293b;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            padding: 60px 20px;
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(246, 224, 94, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(17, 45, 66, 0.05) 0%, transparent 50%);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header-card {
+            background: var(--primary-navy);
+            color: white;
+            padding: 40px;
+            border-radius: 32px;
+            margin-bottom: 50px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(17, 45, 66, 0.2);
+        }
+
+        .header-card h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -0.02em;
+            color: var(--accent-yellow);
+        }
+
+        .header-card p {
+            opacity: 0.8;
+            font-size: 1.1rem;
+            margin-top: 10px;
+        }
+
+        .diagram-container {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-soft);
+            border-radius: 40px;
+            padding: 60px;
+            margin-bottom: 60px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(20px);
+        }
+
+        .diagram-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 50px;
+            color: var(--primary-navy);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .diagram-title span {
+            background: var(--accent-yellow);
+            color: var(--primary-navy);
+            padding: 4px 12px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .flow-docs {
+            margin-top: 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            border-top: 1px solid var(--border-soft);
+            padding-top: 40px;
+        }
+
+        .doc-item h3 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--primary-navy);
+            margin-bottom: 15px;
+        }
+
+        .doc-item ul {
+            padding-left: 20px;
+            color: #64748b;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .diagram-container { padding: 30px; }
+            .header-card h1 { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-card">
+            <h1>System Flow & Data Architecture</h1>
+            <p>Formalized DFD Analysis - ITSD Tracker Evolution 2.0</p>
+        </div>
+
+        <!-- DFD LEVEL 0 -->
+        <div class="diagram-container">
+            <div class="diagram-title">
+                <span>NEW</span> DFD LEVEL 0: Context Diagram
+            </div>
+            <div class="mermaid">
+                graph LR
+                    STAFF[ADMINISTRATIVE / STAFF]
+                    ADMIN[ADMIN / EXECUTIVE]
+                    USER[USERS / ASSIGNEE]
+                    SYSTEM((ITSD TRACKER SYSTEM))
+
+                    STAFF -- "1. Submit Communication<br/>(Tracking ID, Subject, Attachments)" --> SYSTEM
+                    SYSTEM -- "2. Status Tracking & Feedback<br/>(Pending, Returned, History)" --> STAFF
+
+                    SYSTEM -- "3. Automated Alerts<br/>(New Submissions, Status Updates)" --> ADMIN
+                    ADMIN -- "4. Executive Review<br/>(Approve, Decline, Return + Remarks)" --> SYSTEM
+
+                    SYSTEM -- "5. Task Assignment Notification<br/>(Approved Record & Details)" --> USER
+                    USER -- "6. Completion Reporting<br/>(Proof of Work, Status -> COMPLETED)" --> SYSTEM
+
+                    style SYSTEM fill:#112d42,color:#fff,stroke:#112d42,stroke-width:4px
+                    style STAFF fill:#fff,stroke:#112d42,stroke-width:2px
+                    style ADMIN fill:#fff,stroke:#112d42,stroke-width:2px
+                    style USER fill:#fff,stroke:#112d42,stroke-width:2px
+            </div>
+        </div>
+
+        <!-- DFD LEVEL 1 -->
+        <div class="diagram-container">
+            <div class="diagram-title">
+                <span>DETAILED</span> DFD LEVEL 1: Process Decomposition
+            </div>
+            <div class="mermaid">
+                graph TD
+                    %% External Entities
+                    E1[STAFF ENTITY]
+                    E2[ADMIN ENTITY]
+                    E3[ASSIGNEE ENTITY]
+
+                    %% Processes
+                    P1((1.0 Authentication<br/>& Session Management))
+                    P2((2.0 Transmission &<br/>Registry Processor))
+                    P3((3.0 Executive<br/>Governance Engine))
+                    P4((4.0 Task Execution<br/>& Compliance))
+                    P5((5.0 Interactive<br/>Notification Engine))
+
+                    %% Data Stores
+                    D1[(Users Store)]
+                    D2[(Communications Data Store)]
+                    D3[(Notification Logs)]
+                    D4[(Audit Trail / Logs)]
+
+                    %% Flows
+                    E1 -- "Auth Credentials" --> P1
+                    P1 -- "Verify Role & Permissions" --> D1
+                    P1 -- "Secure Token" --> E1
+
+                    E1 -- "Communication Package" --> P2
+                    P2 -- "Assign Tracking ID" --> D2
+                    P2 -- "Log Action" --> D4
+
+                    E2 -- "Review Decision + Remarks" --> P3
+                    P3 -- "Update Status Table" --> D2
+                    P3 -- "Dispatch Event" --> P5
+
+                    P5 -- "Real-time Alerts<br/>(Staff & Assignee)" --> D3
+                    P5 -- "Push Notifications" --> E1
+                    P5 -- "Assignment Hub" --> E3
+
+                    E3 -- "Proof of Work<br/>(Completion Event)" --> P4
+                    P4 -- "Status Transition:<br/>APPROVED -> COMPLETED" --> D2
+                    P4 -- "End-of-Cycle Alert" --> P5
+
+                    style P1 fill:#f6e05e,stroke:#d69e2e,stroke-width:2px
+                    style P2 fill:#f6e05e,stroke:#d69e2e,stroke-width:2px
+                    style P3 fill:#f6e05e,stroke:#d69e2e,stroke-width:2px
+                    style P4 fill:#f6e05e,stroke:#d69e2e,stroke-width:2px
+                    style P5 fill:#f6e05e,stroke:#d69e2e,stroke-width:2px
+                    
+                    style D1 fill:#112d42,color:#fff,stroke-width:3px
+                    style D2 fill:#112d42,color:#fff,stroke-width:3px
+                    style D3 fill:#112d42,color:#fff,stroke-width:3px
+                    style D4 fill:#112d42,color:#fff,stroke-width:3px
+            </div>
+
+            <div class="flow-docs">
+                <div class="doc-item">
+                    <h3>Submissions (Process 2.0)</h3>
+                    <ul>
+                        <li>Generates unique Tracking ID</li>
+                        <li>Stores subject, kind, office, and attachments</li>
+                        <li>Initial Status: <b>PENDING</b></li>
+                    </ul>
+                </div>
+                <div class="doc-item">
+                    <h3>Governance (Process 3.0)</h3>
+                    <ul>
+                        <li>Admin provides public remarks for feedback</li>
+                        <li>Transitions: <b>APPROVED, DECLINED, RETURNED</b></li>
+                        <li>Triggers stakeholder notifications</li>
+                    </ul>
+                </div>
+                <div class="doc-item">
+                    <h3>Compliance (Process 4.0)</h3>
+                    <ul>
+                        <li>Assignees only see APPROVED records</li>
+                        <li><b>Mark as Completed</b> transitions to final status</li>
+                        <li>Alerts both Submitter and Admin of success</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'neutral',
+            securityLevel: 'loose',
+            flowchart: {
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+</html>

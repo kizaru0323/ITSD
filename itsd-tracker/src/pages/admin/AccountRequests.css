@@ -1,0 +1,258 @@
+/* Using shared styles from Users.css where possible */
+.pu-status-badge.pending {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+}
+.pu-status-badge.pending .pu-status-dot {
+    background: #d97706;
+}
+
+.pu-status-badge.approved {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+.pu-status-badge.approved .pu-status-dot {
+    background: #10b981;
+}
+
+.pu-status-badge.declined {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+.pu-status-badge.declined .pu-status-dot {
+    background: #ef4444;
+}
+
+.spinner-navy {
+    width: 30px;
+    height: 30px;
+    border: 3px solid rgba(17, 45, 66, 0.1);
+    border-top-color: #112d42;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 12px;
+}
+
+.empty-icon-circle-navy {
+    width: 60px;
+    height: 60px;
+    background: rgba(17, 45, 66, 0.05);
+    color: #112d42;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.request-type-badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+.request-type-badge.reactivation {
+    background: rgba(99, 102, 241, 0.1);
+    color: #6366f1;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.request-type-badge.password_reset {
+    background: rgba(139, 92, 246, 0.1);
+    color: #8b5cf6;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+/* --- NOTIFICATION BANNER --- */
+.request-notification-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px; /* Unified to 20px */
+    border-radius: 12px;
+    margin-bottom: 20px; /* Unified to 20px */
+    font-weight: 700;
+    font-size: 0.9rem;
+    animation: slideDown 0.3s ease-out;
+}
+
+.request-notification-banner.approved {
+    background: #dcfce7;
+    color: #166534;
+    border: 1.5px solid #bdf2cb;
+}
+
+.request-notification-banner.declined {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1.5px solid #fecaca;
+}
+
+.banner-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.banner-close {
+    background: none;
+    border: none;
+    color: currentColor;
+    opacity: 0.6;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s;
+}
+
+.banner-close:hover {
+    opacity: 1;
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+/* --- MODERN MODAL STYLES --- */
+.modern-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.modern-modal {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    padding: 10px;
+}
+
+.modern-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 20px; /* Unified to 20px */
+}
+
+.modal-icon-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-icon-circle.approved {
+    background: #ecfdf5;
+    color: #10b981;
+}
+
+.modal-icon-circle.declined {
+    background: #fef2f2;
+    color: #ef4444;
+}
+
+.close-btn-modern {
+    background: #f1f5f9;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #94a3b8;
+    transition: all 0.2s;
+}
+
+.close-btn-modern:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+.modern-modal-body {
+    padding: 0 20px 20px; /* Standard 20px bottom/sides */
+}
+
+.modal-actions-modern {
+    display: flex;
+    gap: 12px;
+}
+
+.modal-btn-modern {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.modal-btn-modern.secondary {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.modal-btn-modern.secondary:hover {
+    background: #e2e8f0;
+}
+
+.modal-btn-modern.primary {
+    background: #112d42;
+    color: white;
+}
+
+.modal-btn-modern.primary:hover {
+    background: #1a4563;
+}
+
+.modal-btn-modern.danger {
+    background: #ef4444;
+    color: white;
+}
+
+.modal-btn-modern.danger:hover {
+    background: #dc2626;
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.2s ease-out;
+}
+
+.animate-zoom-in {
+    animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes zoomIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
