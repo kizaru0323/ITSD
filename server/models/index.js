@@ -16,6 +16,7 @@ const Office = require('./Office');
 const InternalRequest = require('./InternalRequest');
 const InternalRequestAssignees = require('./InternalRequestAssignees');
 const Attachment = require('./Attachment');
+const UserPermission = require('./UserPermission');
 
 // --- associations ---
 
@@ -113,6 +114,18 @@ Attachment.belongsTo(InternalRequest, { foreignKey: 'internalRequestId' });
 User.belongsTo(Role, { foreignKey: 'roleId', as: 'UserRole' });
 Role.hasMany(User, { foreignKey: 'roleId' });
 
+// User <-> Permission (Direct Overrides)
+User.belongsToMany(Permission, {
+    through: UserPermission,
+    as: 'DirectPermissions',
+    foreignKey: 'userId',
+    otherKey: 'permissionId'
+});
+Permission.belongsToMany(User, {
+    through: UserPermission,
+    foreignKey: 'permissionId'
+});
+
 // Role <-> Permission (Many-to-Many)
 Role.belongsToMany(Permission, { 
     through: RolePermission, 
@@ -150,5 +163,6 @@ module.exports = {
     Office,
     InternalRequest,
     InternalRequestAssignees,
-    Attachment
+    Attachment,
+    UserPermission
 };

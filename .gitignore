@@ -30,3 +30,5 @@ _agents/
 _agent/
 brain/
 tmp/
+*.sql
+*.html

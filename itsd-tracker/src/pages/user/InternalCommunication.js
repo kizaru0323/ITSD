@@ -60,7 +60,7 @@ const InternalCommunication = () => {
                 });
                 const data = await res.json();
                 if (Array.isArray(data)) {
-                    const dHeads = data.filter(u => u.role === 'Division Head' || u.roleId === 7);
+                    const dHeads = data.filter(u => u.role === 'Division Head');
                     setDivisionHeads(dHeads);
 
                     // Auto-select first Division Head if available
@@ -205,7 +205,7 @@ const InternalCommunication = () => {
         <UserLayout
             title="Internal Communication"
             subtitle="Send formal requests, letters, or reports directly to the Division Head."
-            permissionRequired="create_record"
+            permissionRequired="direct_memos"
         >
             <div className="internal-comm-container animate-fade-in">
                 <form className="internal-form-card shadow-premium" onSubmit={handleSubmit}>

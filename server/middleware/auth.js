@@ -16,19 +16,29 @@ const authenticate = async (req, res, next) => {
         // Fetch latest user data including permissions to avoid JWT data drift
         const { User, Role, Permission } = require('../models/index');
         const user = await User.findByPk(decoded.id, {
-            include: [{
-                model: Role,
-                as: 'UserRole',
-                include: [{ model: Permission }]
-            }]
+            include: [
+                {
+                    model: Role,
+                    as: 'UserRole',
+                    include: [{ model: Permission }]
+                },
+                {
+                    model: Permission,
+                    as: 'DirectPermissions'
+                }
+            ]
         });
         
         if (!user || user.status !== 'active') {
             return res.status(403).json({ error: 'Account is inactive or has been disabled.' });
         }
 
-        // Map permissions slugs
-        const permissions = user.UserRole?.Permissions?.map(p => p.slug) || [];
+        // Map permissions slugs from Role AND Direct User Overrides
+        const rolePermissions = user.UserRole?.Permissions?.map(p => p.slug) || [];
+        const directPermissions = user.DirectPermissions?.map(p => p.slug) || [];
+        
+        // Merge and remove duplicates
+        const allPermissions = [...new Set([...rolePermissions, ...directPermissions])];
 
         // Override req.user with latest data from DB
         req.user = {
@@ -37,7 +47,7 @@ const authenticate = async (req, res, next) => {
             role: user.role,
             roleId: user.roleId,
             groupId: user.groupId,
-            permissions: permissions
+            permissions: allPermissions
         };
         next();
     } catch (error) {

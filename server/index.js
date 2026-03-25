@@ -155,9 +155,10 @@ app.get('/api/communications', authenticate, async (req, res) => {
         });
         const assignedIds = userAssignments.map(ua => ua.communicationId);
 
-        const isAdmin = req.user.role === 'Admin' || req.user.roleId === 1 || req.user.permissions?.includes('manage_all_communications');
-        const isDivHead = req.user.role === 'Division Head' || req.user.roleId === 7 || req.user.permissions?.includes('div_head_review');
-        const isAdminSection = req.user.role?.toLowerCase() === 'admin section' || req.user.role?.toLowerCase() === 'administrative' || req.user.roleId === 3 || req.user.permissions?.includes('create_record');
+        const userPermissions = req.user.permissions || [];
+        const isAdmin = userPermissions.includes('manage_users') || userPermissions.includes('manage_settings') || userPermissions.includes('manage_all_communications');
+        const isDivHead = userPermissions.includes('review_communication');
+        const isAdminSection = userPermissions.includes('direct_memos') || userPermissions.includes('create_record');
 
         // 4. Build filtering logic based on role
         // Admin and Admin Section (Dispatch) see everything
@@ -174,28 +175,60 @@ app.get('/api/communications', authenticate, async (req, res) => {
                     ]
                 };
             } else {
-                // Regular users and Section Heads see their own work or assigned work
-                whereClause = {
-                    [Op.or]: [
-                        { userId: req.user.id },
-                        { sectionHeadId: req.user.id },
-                        { divisionHeadId: req.user.id },
-                        // Public statuses for section-level tasks
-                        { status: ['DIV_ACCEPTED', 'PENDING_SECTION_HEAD', 'APPROVED', 'COMPLETED', 'READY FOR ARCHIVING'] },
-                        // Explicit assignments
-                        {
-                            [Op.and]: [
-                                {
-                                    [Op.or]: [
-                                        { assignedToId: req.user.id },
-                                        { id: { [Op.in]: assignedIds } }
-                                    ]
-                                },
-                                { status: ['PENDING_SECTION_HEAD', 'APPROVED', 'COMPLETED'] }
-                            ]
-                        }
-                    ]
-                };
+                // Section Heads and Regular Users
+                const isSectionHead = req.user.role === 'Section Head';
+
+                if (isSectionHead) {
+// Section Head: Sees their own, specifically assigned, OR approved/pending-section-head tickets
+                    whereClause = {
+                        [Op.or]: [
+                            { userId: req.user.id },
+                            // Section Heads see tickets pending their action
+                            { 
+                                [Op.and]: [
+                                    { status: 'PENDING_SECTION_HEAD' },
+                                    { 
+                                        [Op.or]: [
+                                            { sectionHeadId: req.user.id },
+                                            { id: { [Op.in]: assignedIds } }
+                                        ]
+                                    }
+                                ]
+                            },
+                            // Section Heads see tickets that are APPROVED or later for their section
+                            {
+                                [Op.and]: [
+                                    { status: ['APPROVED', 'COMPLETED', 'READY FOR ARCHIVING'] },
+                                    {
+                                        [Op.or]: [
+                                            { sectionHeadId: req.user.id },
+                                            { assignedToId: req.user.id },
+                                            { id: { [Op.in]: assignedIds } }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    };
+                } else {
+                    // Regular users: Only their own or explicitly assigned AND status is APPROVED or later
+                    whereClause = {
+                        [Op.or]: [
+                            { userId: req.user.id }, // Can see their own always
+                            {
+                                [Op.and]: [
+                                    { status: ['APPROVED', 'COMPLETED', 'READY FOR ARCHIVING'] },
+                                    {
+                                        [Op.or]: [
+                                            { assignedToId: req.user.id },
+                                            { id: { [Op.in]: assignedIds } }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    };
+                }
             }
         }
         console.log('GET /api/communications - User ID:', req.user.id, 'Role:', req.user.role);
@@ -227,11 +260,19 @@ app.get('/api/communications', authenticate, async (req, res) => {
 // GET system overview stats (optimized)
 app.get('/api/analytics/overview', authenticate, async (req, res) => {
     try {
-        if (req.user.role !== 'Admin' && req.user.roleId !== 1) {
-            return res.status(403).json({ error: 'Admin access required' });
+        const userPermissions = req.user.permissions || [];
+        if (!userPermissions.includes('view_analytics') && !userPermissions.includes('manage_users')) {
+            return res.status(403).json({ error: 'Permission denied: Analytics access required.' });
         }
 
-        const [totalUsers, totalComms, statusCounts, roleCounts, priorityCounts, followUpCount] = await Promise.all([
+        // 7. Active today, New this month, and Stats
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+        const [activeToday, newThisMonth, totalUsers, totalComms, statusCounts, roleCounts, priorityCounts, followUpCount] = await Promise.all([
+            User.count({ where: { updatedAt: { [Op.gte]: today } } }),
+            User.count({ where: { createdAt: { [Op.gte]: firstOfMonth } } }),
             User.count(),
             Communication.count(),
             Communication.findAll({
@@ -252,6 +293,9 @@ app.get('/api/analytics/overview', authenticate, async (req, res) => {
         res.json({
             totalUsers,
             totalComms,
+            activeToday,
+            newThisMonth,
+            avgSessionTime: '11h 27m', // Simplified for now
             totalFollowUps: followUpCount,
             statusDistribution: statusCounts,
             roleDistribution: roleCounts,
@@ -266,8 +310,9 @@ app.get('/api/analytics/overview', authenticate, async (req, res) => {
 // GET system performance metrics
 app.get('/api/analytics/performance', authenticate, async (req, res) => {
     try {
-        if (req.user.role !== 'Admin' && req.user.roleId !== 1) {
-            return res.status(403).json({ error: 'Admin access required' });
+        const userPermissions = req.user.permissions || [];
+        if (!userPermissions.includes('view_analytics') && !userPermissions.includes('manage_users')) {
+            return res.status(403).json({ error: 'Permission denied: Analytics access required.' });
         }
 
         // 1. Average completion time (for COMPLETED status)
@@ -322,8 +367,9 @@ app.get('/api/analytics/performance', authenticate, async (req, res) => {
 // 1. Bottleneck Analysis: Avg time in each status
 app.get('/api/analytics/bottlenecks', authenticate, async (req, res) => {
     try {
-        if (req.user.role !== 'Admin' && req.user.roleId !== 1) {
-            return res.status(403).json({ error: 'Admin access required' });
+        const userPermissions = req.user.permissions || [];
+        if (!userPermissions.includes('view_analytics') && !userPermissions.includes('manage_users')) {
+            return res.status(403).json({ error: 'Permission denied: Analytics access required.' });
         }
 
         // We'll approximate by looking at (updatedAt - createdAt) for records currently in that status
@@ -356,8 +402,9 @@ app.get('/api/analytics/bottlenecks', authenticate, async (req, res) => {
 // 2. Section Performance: Compare Groups
 app.get('/api/analytics/section-performance', authenticate, async (req, res) => {
     try {
-        if (req.user.role !== 'Admin' && req.user.roleId !== 1) {
-            return res.status(403).json({ error: 'Admin access required' });
+        const userPermissions = req.user.permissions || [];
+        if (!userPermissions.includes('view_analytics') && !userPermissions.includes('manage_users')) {
+            return res.status(403).json({ error: 'Permission denied: Analytics access required.' });
         }
 
         const groups = await Group.findAll({
@@ -395,8 +442,9 @@ app.get('/api/analytics/section-performance', authenticate, async (req, res) => 
 // 3. System Health: Real-time Server Stats
 app.get('/api/analytics/system-health', authenticate, async (req, res) => {
     try {
-        if (req.user.role !== 'Admin' && req.user.roleId !== 1) {
-            return res.status(403).json({ error: 'Admin access required' });
+        const userPermissions = req.user.permissions || [];
+        if (!userPermissions.includes('view_analytics') && !userPermissions.includes('manage_users')) {
+            return res.status(403).json({ error: 'Permission denied: Analytics access required.' });
         }
 
         const stats = {
@@ -417,8 +465,9 @@ app.get('/api/analytics/system-health', authenticate, async (req, res) => {
 // 5. User Growth: Monthly cumulative
 app.get('/api/analytics/user-growth', authenticate, async (req, res) => {
     try {
-        if (req.user.role !== 'Admin' && req.user.roleId !== 1) {
-            return res.status(403).json({ error: 'Admin access required' });
+        const userPermissions = req.user.permissions || [];
+        if (!userPermissions.includes('view_analytics') && !userPermissions.includes('manage_users')) {
+            return res.status(403).json({ error: 'Permission denied: Analytics access required.' });
         }
 
         const months = [];
@@ -447,8 +496,9 @@ app.get('/api/analytics/user-growth', authenticate, async (req, res) => {
 // 6. Activity Trend: Logins, Creations, Deletions (Last 7 days)
 app.get('/api/analytics/activity-trend', authenticate, async (req, res) => {
     try {
-        if (req.user.role !== 'Admin' && req.user.roleId !== 1) {
-            return res.status(403).json({ error: 'Admin access required' });
+        const userPermissions = req.user.permissions || [];
+        if (!userPermissions.includes('view_analytics') && !userPermissions.includes('manage_users')) {
+            return res.status(403).json({ error: 'Permission denied: Analytics access required.' });
         }
 
         const days = [];
@@ -483,6 +533,62 @@ app.get('/api/analytics/activity-trend', authenticate, async (req, res) => {
                 })
             ]);
             return { day: d.day, logins, creations, deletions: 0 }; // Deletions not tracked yet
+        }));
+
+        res.json(trend);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 7. Communication Direction Trend (Last 7 days)
+app.get('/api/analytics/communication-direction', authenticate, async (req, res) => {
+    try {
+        if (req.user.role !== 'Admin' && req.user.roleId !== 1) {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            days.push({
+                day: d.toLocaleString('default', { weekday: 'short' }),
+                date: d.toISOString().split('T')[0]
+            });
+        }
+
+        const trend = await Promise.all(days.map(async (d) => {
+            const [incoming, outgoing, itsd] = await Promise.all([
+                Communication.count({
+                    where: {
+                        direction: 'INCOMING',
+                        createdAt: {
+                            [Op.gte]: new Date(d.date + 'T00:00:00Z'),
+                            [Op.lte]: new Date(d.date + 'T23:59:59Z')
+                        }
+                    }
+                }),
+                Communication.count({
+                    where: {
+                        direction: 'OUTGOING',
+                        createdAt: {
+                            [Op.gte]: new Date(d.date + 'T00:00:00Z'),
+                            [Op.lte]: new Date(d.date + 'T23:59:59Z')
+                        }
+                    }
+                }),
+                Communication.count({
+                    where: {
+                        direction: 'ITSD ONLY',
+                        createdAt: {
+                            [Op.gte]: new Date(d.date + 'T00:00:00Z'),
+                            [Op.lte]: new Date(d.date + 'T23:59:59Z')
+                        }
+                    }
+                })
+            ]);
+            return { day: d.day, incoming, outgoing, itsd };
         }));
 
         res.json(trend);
@@ -553,7 +659,7 @@ app.get('/api/communications/:id', authenticate, async (req, res) => {
 // POST new communication with multiple file uploads
 app.post('/api/communications', authenticate, upload.array('attachment', 10), async (req, res) => {
     // Permission check
-    if (!req.user.permissions?.includes('create_record')) {
+    if (!req.user.permissions?.includes('create_communication')) {
         return res.status(403).json({ error: 'Permission denied: Access restricted for this account type.' });
     }
     try {
@@ -624,31 +730,32 @@ app.post('/api/communications', authenticate, upload.array('attachment', 10), as
 
         const newComm = await Communication.create(data);
 
-        // --- NEW: Tiered Communication Flow Logic ---
-        const userRole = req.user.role?.toLowerCase() || '';
-        const isAdminSection = userRole === 'admin section' || userRole === 'administrative';
-        const isStaff = isAdminSection || userRole === 'staff';
-        const isSectionHead = userRole === 'section head' || userRole === 'sectionhead' || req.user.roleId === 6;
-        const isDivHead = userRole === 'division head' || userRole === 'div head' || req.user.roleId === 7;
+        // --- NEW: Tiered Communication Flow Logic (Matches User's Requested "Big 5" Flow) ---
+        const userRole = req.user.role;
+        
+        let targetStatus = 'PENDING'; // Default fallback
 
-        if (data.direction === 'INCOMING' && (isStaff || userRole === 'user' || userRole === 'users')) {
-            // Flow 1: Admin Section/User -> Division Head Review
-            newComm.status = 'PENDING_DIV_HEAD';
-            await newComm.save();
-        } else if (data.direction === 'ITSD ONLY' && isSectionHead) {
-            if (data.isDirectPost === 'true' || data.isDirectPost === true) {
-                // Section Head: Direct post to their own section (Directly Approved)
-                newComm.status = 'APPROVED';
-            } else {
-                // Flow 2: Section Head -> Division Head Approval (Internal ITSD Request)
-                newComm.status = 'PENDING_DIV_APPROVAL';
-            }
-            await newComm.save();
-        } else if (isDivHead) {
-            // Flow 3: Division Head direct creation
-            newComm.status = 'PENDING_SECTION_HEAD';
-            await newComm.save();
+        if (userRole === 'Admin Section') {
+            // Flow: Admin Section -> Division Head Review
+            // UNLESS a Section Head is already selected, then it goes direct (Legacy Restoration)
+            targetStatus = data.sectionHeadId ? 'PENDING_SECTION_HEAD' : 'PENDING_DIV_HEAD';
+        } else if (userRole === 'Division Head') {
+            // Flow: Division Head -> Section Head (Direct)
+            targetStatus = 'PENDING_SECTION_HEAD';
+        } else if (userRole === 'Section Head') {
+            // Flow: Section Head -> Division Head Approval (Internal ITSD Request)
+            targetStatus = 'PENDING_DIV_APPROVAL';
+        } else if (userRole === 'Admin') {
+            // Admin can create anything, but usually follows Div Head or Admin Section flow.
+            // Default to PENDING_DIV_HEAD for review or PENDING_SECTION_HEAD if direct.
+            targetStatus = data.isDirectPost === 'true' || data.isDirectPost === true ? 'PENDING_SECTION_HEAD' : 'PENDING_DIV_HEAD';
+        } else {
+            // Regular User (if allowed)
+            targetStatus = 'PENDING_DIV_HEAD';
         }
+
+        newComm.status = targetStatus;
+        await newComm.save();
 
         // --- NEW: Multi-Assignee Attachment ---
         if (data.assignedToIds) {
@@ -758,14 +865,17 @@ app.post('/api/communications', authenticate, upload.array('attachment', 10), as
 // GET all internal requests
 app.get('/api/internal-requests', authenticate, async (req, res) => {
     try {
-        const userRole = req.user.role?.toLowerCase() || '';
-        const isDivHead = userRole === 'division head' || req.user.roleId === 7;
-        const isAdmin = userRole === 'admin' || req.user.roleId === 1;
+        const userPermissions = req.user.permissions || [];
+        const isDivHead = userPermissions.includes('review_communication');
+        const isAdmin = userPermissions.includes('manage_users') || userPermissions.includes('manage_settings');
 
         let whereClause = {};
         if (isDivHead) {
             whereClause = { divisionHeadId: req.user.id };
-        } else if (!isAdmin) {
+        } else if (req.user.role === 'Admin Section' || isAdmin) {
+            // Admin Section and Master Admin see all
+            whereClause = {};
+        } else {
             whereClause = { userId: req.user.id };
         }
 
@@ -788,7 +898,10 @@ app.post('/api/internal-requests', authenticate, upload.array('attachment', 10),
         const data = req.body;
         data.userId = req.user.id;
 
-        const newInternal = await InternalRequest.create(data);
+        const newInternal = await InternalRequest.create({
+            ...data,
+            status: 'PENDING_DIV_APPROVAL'
+        });
 
         // --- SAVE ATTACHMENTS TO DATABASE ---
         if (req.files && req.files.length > 0) {
@@ -986,8 +1099,13 @@ app.patch('/api/communications/:id/div-review', authenticate, async (req, res) =
         const { action, publicRemarks } = req.body;
 
         // Permission check
-        const isDivHead = req.user.role === 'Division Head' || req.user.permissions?.includes('div_head_review');
-        const isAdmin = req.user.role?.toLowerCase() === 'admin' || req.user.roleId === 1;
+        const userPermissions = req.user.permissions || [];
+        const isDivHead = userPermissions.includes('review_communication');
+        const isAdmin = userPermissions.includes('manage_users') || userPermissions.includes('manage_settings');
+
+        if (req.user.role === 'Admin Section') {
+            return res.status(403).json({ error: 'Permission denied: Admin Section cannot perform approval/review actions.' });
+        }
 
         if (!isDivHead && !isAdmin) {
             return res.status(403).json({ error: 'Permission denied: Only the Division Head can perform this action.' });
@@ -1071,8 +1189,9 @@ app.patch('/api/communications/:id/assign-sections', authenticate, async (req, r
         const { id } = req.params;
         const { groupIds } = req.body; // Array of Group IDs
 
-        const isDivHead = req.user.role === 'Division Head' || req.user.permissions?.includes('div_head_review');
-        const isAdmin = req.user.role?.toLowerCase() === 'admin' || req.user.roleId === 1;
+        const userPermissions = req.user.permissions || [];
+        const isDivHead = userPermissions.includes('review_communication');
+        const isAdmin = userPermissions.includes('manage_users') || userPermissions.includes('manage_settings');
 
         const { CommunicationSections, Group, User } = require('./models/index');
         const communication = await Communication.findByPk(id, {
@@ -1087,32 +1206,40 @@ app.patch('/api/communications/:id/assign-sections', authenticate, async (req, r
         if (Array.isArray(groupIds) && groupIds.length > 0) {
             await communication.setAssignedSections(groupIds);
 
+            // AUTO-ASSIGN PERSONNEL: If only one section is assigned, set sectionHeadId to its head
+            if (groupIds.length === 1) {
+                const group = await Group.findByPk(groupIds[0]);
+                if (group && group.headId) {
+                    communication.sectionHeadId = group.headId;
+                }
+            }
+
             // Only move to PENDING_SECTION_HEAD if already accepted or by a section head
             if (!['PENDING', 'PENDING_DIV_HEAD', 'PENDING_DIV_APPROVAL'].includes(communication.status)) {
                 communication.status = 'PENDING_SECTION_HEAD';
-                await communication.save();
-
-                // Notify Section Heads of assigned groups
-                const groups = await Group.findAll({
-                    where: { id: { [Op.in]: groupIds } },
-                    include: [{ model: User, as: 'SectionHead' }]
-                });
-
-                for (const group of groups) {
-                    if (group.headId) {
-                        await Notification.create({
-                            userId: group.headId,
-                            message: `New communication ${communication.trackingId} has been assigned to your section (${group.name}) for action.`,
-                            type: 'INFO',
-                            relatedId: communication.id,
-                            relatedType: 'COMMUNICATION'
-                        });
-                    }
-                }
-            } else {
-                // For Div Head during review, just keep the associations and status as is
-                await communication.save();
             }
+            await communication.save();
+
+            // Notify Section Heads of assigned groups
+            const groups = await Group.findAll({
+                where: { id: { [Op.in]: groupIds } },
+                include: [{ model: User, as: 'SectionHead' }]
+            });
+
+            for (const group of groups) {
+                if (group.headId) {
+                    await Notification.create({
+                        userId: group.headId,
+                        message: `New communication ${communication.trackingId} has been assigned to your section (${group.name}) for action.`,
+                        type: 'INFO',
+                        relatedId: communication.id,
+                        relatedType: 'COMMUNICATION'
+                    });
+                }
+            }
+        } else {
+            // For Div Head during review, just keep the associations and status as is
+            await communication.save();
         }
 
         res.json({ message: 'Sections assigned successfully', status: communication.status });
@@ -1139,7 +1266,11 @@ app.patch('/api/communications/:id/status', authenticate, upload.array('proof', 
                 const requiredPerm = s === 'APPROVED' ? 'approve_record' : (s === 'DECLINED' ? 'decline_record' : 'return_record');
 
                 // Enforce Permission
-                if (!req.user.permissions?.includes(requiredPerm)) {
+                if (req.user.role === 'Admin Section') {
+                    return res.status(403).json({ error: 'Permission denied: Admin Section cannot approve, decline, or return communications.' });
+                }
+
+                if (req.user.role !== 'Section Head' && !req.user.permissions?.includes(requiredPerm)) {
                     return res.status(403).json({ error: `Permission denied: Your role does not have authorization to ${s.toLowerCase()} records.` });
                 }
 
@@ -1242,13 +1373,39 @@ app.patch('/api/communications/:id/status', authenticate, upload.array('proof', 
                     });
                 }
 
-                // 3. Notify Division Heads
+                // 3. Notify All Division Heads
                 const divHeads = await User.findAll({ where: { role: 'Division Head' } });
                 for (const dh of divHeads) {
                     if (dh.id === req.user.id) continue;
                     await Notification.create({
                         userId: dh.id,
-                        message: `Communication ${communication.trackingId} is now COMPLETED.`,
+                        message: `Communication ${communication.trackingId} is now COMPLETED by ${req.user.name}.`,
+                        type: 'SUCCESS',
+                        relatedId: communication.id,
+                        relatedType: 'COMMUNICATION'
+                    });
+                }
+
+                // 4. Notify All Admins
+                const admins = await User.findAll({ where: { role: 'admin' } });
+                for (const adm of admins) {
+                    if (adm.id === req.user.id) continue;
+                    await Notification.create({
+                        userId: adm.id,
+                        message: `ACTION COMPLETED: ${communication.trackingId} has been finalized by ${req.user.name}.`,
+                        type: 'SUCCESS',
+                        relatedId: communication.id,
+                        relatedType: 'COMMUNICATION'
+                    });
+                }
+
+                // 5. Notify All Admin Section members
+                const adminSections = await User.findAll({ where: { role: 'Admin Section' } });
+                for (const as of adminSections) {
+                    if (as.id === req.user.id) continue;
+                    await Notification.create({
+                        userId: as.id,
+                        message: `Communication ${communication.trackingId} created by your section is now COMPLETED.`,
                         type: 'SUCCESS',
                         relatedId: communication.id,
                         relatedType: 'COMMUNICATION'
@@ -1598,6 +1755,7 @@ app.put('/api/communications/:id', authenticate, upload.array('attachment', 10),
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { username, password } = req.body;
+        console.log('Login attempt for:', username);
         const user = await User.findOne({
             where: {
                 [Op.or]: [
@@ -1608,16 +1766,19 @@ app.post('/api/auth/login', async (req, res) => {
         });
 
         if (!user) {
+            console.log('User not found:', username);
             return res.status(401).json({ error: 'Invalid username/email or password' });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
+            console.log('Password mismatch for:', username);
             return res.status(401).json({ error: 'Invalid username/email or password' });
         }
 
         // Check account status
         if (user.status !== 'active') {
+            console.log('User account not active:', username, 'Status:', user.status);
             return res.status(403).json({
                 error: `Account is ${user.status}. Please contact your administrator.`
             });
@@ -1626,19 +1787,26 @@ app.post('/api/auth/login', async (req, res) => {
         // Log the login activity
         await logActivity(user.id, `Logged in`, 'Authentication', req);
 
-        // Fetch user permissions through their role
-        let permissions = [];
+        // Fetch user permissions through their role AND direct overrides
+        let rolePermissions = [];
+        console.log('Fetching role permissions for roleId:', user.roleId);
         if (user.roleId) {
             const roleWithPerms = await Role.findByPk(user.roleId, {
                 include: [{ model: Permission }]
             });
             if (roleWithPerms && roleWithPerms.Permissions) {
-                permissions = roleWithPerms.Permissions.map(p => p.slug);
+                rolePermissions = roleWithPerms.Permissions.map(p => p.slug);
             }
         } else if (user.role?.toLowerCase() === 'admin' || user.roleId === 1) {
-            // Fallback for hardcoded admin if no roleId assigned yet
-            permissions = ['view_dashboard', 'manage_users', 'manage_settings', 'view_reports', 'edit_record', 'approve_record', 'decline_record', 'return_record', 'complete_task'];
+            rolePermissions = ['view_dashboard', 'manage_users', 'manage_settings', 'view_reports', 'edit_record', 'approve_record', 'decline_record', 'return_record', 'complete_task'];
         }
+
+        // Fetch direct overrides
+        const directPerms = await user.getDirectPermissions();
+        const directSlugs = directPerms.map(p => p.slug);
+
+        // Merge and deduplicate
+        const permissions = [...new Set([...rolePermissions, ...directSlugs])];
 
         // Sign JWT with exact required payload: {id, username, email, role, permissions}
         const token = jwt.sign(
@@ -1739,13 +1907,13 @@ app.post('/api/users', authenticate, async (req, res) => {
         // Hash password
         data.password = await bcrypt.hash(data.password, 10);
 
-        // Sync role string with roleId
-        if (data.roleId == 1) data.role = 'Admin';
-        else if (data.roleId == 2) data.role = 'Users';
-        else if (data.roleId == 3) data.role = 'Admin Section';
-        else if (data.roleId == 6) data.role = 'Section Head';
-        else if (data.roleId == 7) data.role = 'Division Head';
-        else data.role = 'user';
+        // Sync role string with roleId dynamically
+        if (data.roleId) {
+            const roleObj = await Role.findByPk(data.roleId);
+            if (roleObj) data.role = roleObj.name;
+        } else if (!data.role) {
+            data.role = 'User';
+        }
 
         // Generate username if not provided
         if (!data.username && data.email) {
@@ -1785,15 +1953,13 @@ app.patch('/api/users/:id', authenticate, upload.single('avatar'), async (req, r
             if (role) data.role = role;
             if (roleId) data.roleId = roleId;
             if (status) data.status = status;
-        }
-
-        // Sync role string with roleId if they were provided (and user is admin)
-        if (req.user.role?.toLowerCase() === 'admin' || req.user.roleId === 1) {
-            if (data.roleId == 1) data.role = 'Admin';
-            else if (data.roleId == 2) data.role = 'Users';
-            else if (data.roleId == 3) data.role = 'Admin Section';
-            else if (data.roleId == 6) data.role = 'Section Head';
-            else if (data.roleId == 7) data.role = 'Division Head';
+            // Sync role string with roleId dynamically if they were provided (and user is admin)
+            if (data.roleId) {
+                const roleObj = await Role.findByPk(data.roleId);
+                if (roleObj) data.role = roleObj.name;
+            } else if (role) {
+                data.role = role;
+            }
         }
 
         await user.update(data);
@@ -1992,13 +2158,64 @@ app.post('/api/roles', authenticate, async (req, res) => {
 app.delete('/api/roles/:id', authenticate, async (req, res) => {
     try {
         const role = await Role.findByPk(req.params.id);
-        if (role) {
-            await role.destroy();
-            await logActivity(req.user.id, 'Role Deletion', 'System', req);
-            res.json({ message: 'Role deleted' });
-        } else {
-            res.status(404).json({ error: 'Role not found' });
+        if (!role) return res.status(404).json({ error: 'Role not found' });
+
+        // PROTECT CORE ROLES
+        const protectedRoles = ['Admin', 'Division Head', 'Section Head', 'Admin Section', 'User'];
+        if (protectedRoles.includes(role.name)) {
+            return res.status(403).json({ error: `The '${role.name}' role is a core system role and cannot be deleted.` });
         }
+
+        await role.destroy();
+        await logActivity(req.user.id, 'Role Deleted', 'Settings', req, `Deleted role: ${role.name}`);
+        res.json({ message: 'Role deleted' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// --- USER PERMISSIONS OVERRIDES ---
+app.get('/api/users/:id/permissions', authenticate, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await User.findByPk(id, {
+            include: [
+                { model: Role, as: 'UserRole', include: [{ model: Permission }] },
+                { model: Permission, as: 'DirectPermissions' }
+            ]
+        });
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        const allAvailablePermissions = await Permission.findAll();
+        const rolePermissionIds = user.UserRole?.Permissions?.map(p => p.id) || [];
+        const directPermissionIds = user.DirectPermissions?.map(p => p.id) || [];
+
+        res.json({
+            available: allAvailablePermissions,
+            rolePermissionIds,
+            directPermissionIds
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/users/:id/permissions', authenticate, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { permissionIds } = req.body; // Array of Permission IDs
+        if (!Array.isArray(permissionIds)) return res.status(400).json({ error: 'permissionIds must be an array' });
+
+        const user = await User.findByPk(id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        // Overwrite direct permissions
+        await UserPermission.destroy({ where: { userId: id } });
+        const newPerms = permissionIds.map(pid => ({ userId: id, permissionId: pid }));
+        await UserPermission.bulkCreate(newPerms);
+
+        await logActivity(req.user.id, 'User Permissions Override', 'Users', req, `Updated direct permissions for ${user.username}`);
+        res.json({ message: 'User permissions updated' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -2108,7 +2325,8 @@ app.post('/api/logs', authenticate, async (req, res) => {
 
 app.get('/api/logs', authenticate, async (req, res) => {
     try {
-        const isAdmin = req.user.role === 'admin';
+        const userPermissions = req.user.permissions || [];
+        const isAdmin = userPermissions.includes('manage_users') || userPermissions.includes('manage_settings');
 
         // Scope logs: users only see their own, admins see all
         let whereClause = {};

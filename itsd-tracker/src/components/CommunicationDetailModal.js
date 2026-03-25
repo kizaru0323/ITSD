@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { API_BASE_URL } from '../apiConfig';
+import { API_BASE_URL, getAttachmentUrl } from '../apiConfig';
 import AttachmentPreviewModal from './AttachmentPreviewModal';
 import './CommunicationDetailModal.css';
 
@@ -184,11 +184,14 @@ const CommunicationDetailModal = ({ communicationId, onClose }) => {
                                     <h4>ATTACHED DOCUMENTS ({details.attachments.length})</h4>
                                     <div className="documents-grid-v2">
                                          {details.attachments.map((file, idx) => {
-                                            const fileUrl = `${API_BASE_URL}/uploads/${file}`;
-                                            const fileName = file.split('-').slice(1).join('-');
+                                            const fileUrl = getAttachmentUrl(file);
+                                            const fileName = typeof file === 'string' 
+                                                ? (file.includes('-') ? file.split('-').slice(1).join('-') : file)
+                                                : (file.name || 'document');
                                             
                                             // Determine if file is previewable
-                                            const isPreviewable = /\.(jpg|jpeg|png|gif|webp|pdf)$/i.test(file);
+                                            const fileString = typeof file === 'string' ? file : (file.name || '');
+                                            const isPreviewable = /\.(jpg|jpeg|png|gif|webp|pdf)$/i.test(fileString);
 
                                             return (
                                                 <div 

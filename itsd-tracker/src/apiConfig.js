@@ -2,7 +2,7 @@
  * Centralized API configuration for the ITSD Tracker application.
  * Change the API_BASE_URL here to point to a production server or different IP.
  */
-export const API_BASE_URL = 'http://192.168.2.80:5000';
+export const API_BASE_URL = 'http://192.168.137.1:5000';
 
 export const getApiUrl = (endpoint) => {
     // Ensure endpoint starts with /
@@ -21,16 +21,16 @@ export const getUploadUrl = (filename) => {
  */
 export const getAttachmentUrl = (attachment) => {
     if (!attachment) return null;
-    
+
     // Legacy support: filenames as strings
     if (typeof attachment === 'string') {
         return `${API_BASE_URL}/uploads/${attachment}`;
     }
-    
+
     // New support: database objects with {id, name, isDb}
     if (attachment.isDb && attachment.id) {
         return `${API_BASE_URL}/api/attachments/${attachment.id}`;
     }
-    
+
     return null;
 };

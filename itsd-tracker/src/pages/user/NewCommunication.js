@@ -104,18 +104,17 @@ const NewCommunication = () => {
                 const usersData = await usersRes.json();
                 
                 if (Array.isArray(usersData)) {
-                    // Filter Section Heads (Role is Section Head OR explicit Head status)
+                    // Filter Section Heads (Role name check)
                     const sHeads = usersData.filter(u => 
-                        (u.roleId === 6 || (u.role && u.role.toLowerCase() === 'section head') || u.isHead || u.HeadedGroup) && 
-                        u.roleId !== 7 &&
-                        u.role !== 'Division Head' && 
-                        u.name !== 'Erlinda B. Sandig'
+                        (u.role && u.role.toLowerCase() === 'section head') || u.isHead || u.HeadedGroup
                     );
                     setSectionHeads(sHeads);
+                    console.log('Filtered Section Heads:', sHeads.length);
 
-                    // Filter Division Heads
-                    const dHeads = usersData.filter(u => u.role === 'Division Head' || u.roleId === 7);
+                    // Filter Division Heads (Role name check)
+                    const dHeads = usersData.filter(u => u.role && u.role.toLowerCase() === 'division head');
                     setDivisionHeads(dHeads);
+                    console.log('Filtered Division Heads:', dHeads.length);
 
                     // Auto-select if current user is a Division Head
                     const currentUser = JSON.parse(sessionStorage.getItem('itsd_user') || '{}');
@@ -213,10 +212,10 @@ const NewCommunication = () => {
         setSelectedFiles(prev => prev.filter((_, i) => i !== index));
     };
 
-    const isAdmin = userRole === 'admin' || userRoleId === 1;
-    const isDivHead = userRole === 'division head' || userRoleId === 7;
-    const isSectionHead = hasPermission('section_head_assignment');
-    const isAdminSection = userRole?.toLowerCase() === 'admin section' || userRole?.toLowerCase() === 'administrative' || userRoleId === 3;
+    const isAdmin = userRole?.toLowerCase() === 'admin' || userRoleId === 1;
+    const isDivHead = userRole?.toLowerCase() === 'division head' || userRoleId === 7;
+    const isSectionHead = hasPermission('direct_memos'); // Section Head has this
+    const isAdminSection = userRole?.toLowerCase() === 'admin section';
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -300,7 +299,7 @@ const NewCommunication = () => {
         <UserLayout
             title="Create New Ticket"
             subtitle="Fill out the fields below to register a new ticket entry in the system."
-            permissionRequired="create_record"
+            permissionRequired="create_communication"
         >
             <div className="manage-comm-container animate-fade-in">
                 <form className="manage-form-card" onSubmit={handleSubmit}>

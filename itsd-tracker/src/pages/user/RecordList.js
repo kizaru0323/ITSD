@@ -51,6 +51,7 @@ const RecordList = ({ role = "USER", filter = "ALL" }) => {
     const [showSectionModal, setShowSectionModal] = useState(false);
     const [recordToAssignSection, setRecordToAssignSection] = useState(null);
     const [selectedGroupIds, setSelectedGroupIds] = useState([]);
+    const [notification, setNotification] = useState(null); // { message, type: 'success' | 'error' }
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
@@ -65,15 +66,15 @@ const RecordList = ({ role = "USER", filter = "ALL" }) => {
             if (!response.ok) throw new Error('Failed to fetch communications');
             const data = await response.json();
             setRecords(data);
-            applyFilters(data, subFilter);
+            // applyFilters(data, subFilter); // Removed: handled by useEffect
         } catch (error) {
             console.error('Error fetching communications:', error);
             setRecords([]);
             setFilteredRecords([]);
         }
-    }, [subFilter, filter]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, []); // Removed subFilter/filter dependencies to prevent loops
 
-    const applyFilters = (data, currentSubFilter) => {
+    const applyFilters = useCallback((data, currentSubFilter) => {
         let result = data;
         if (filter === 'PROCESSED') {
             result = data.filter(c => {
@@ -96,11 +97,17 @@ const RecordList = ({ role = "USER", filter = "ALL" }) => {
             result = result.filter(c => (c.status || '').toUpperCase() === currentSubFilter);
         }
         setFilteredRecords(result);
-    };
+    }, [filter]);
 
-    React.useEffect(() => {
+    // Initial load and on filter change
+    useEffect(() => {
         fetchRecords();
-    }, [filter, fetchRecords]); 
+    }, [fetchRecords, filter]);
+
+    // Synchronize filteredRecords whenever records or subFilter changes
+    useEffect(() => {
+        applyFilters(records, subFilter);
+    }, [records, subFilter, applyFilters]);
 
     React.useEffect(() => {
         const fetchUsers = async () => {
@@ -110,7 +117,7 @@ const RecordList = ({ role = "USER", filter = "ALL" }) => {
                 setCurrentUser(user);
                 
                 // Fetch directory if admin OR if they have a groupId (Section Head flow)
-                if (user.role?.toLowerCase() === 'admin' || user.roleId === 1 || user.groupId) {
+                if (user.role?.toLowerCase() === 'admin' || user.role === 'Admin' || user.groupId) {
                     try {
                         const token = sessionStorage.getItem('itsd_auth_token');
                         let url = `${API_BASE_URL}/api/users`;
@@ -278,7 +285,7 @@ const RecordList = ({ role = "USER", filter = "ALL" }) => {
             logActivity('Division Review', `${action} communication ID: ${id}`, role, 'Records');
         } catch (error) {
             console.error('Error in handleDivReview:', error);
-            alert('Review failed.');
+            setNotification({ message: 'Review failed. Please try again.', type: 'error' });
         }
     };
 
@@ -302,7 +309,7 @@ const RecordList = ({ role = "USER", filter = "ALL" }) => {
             setSelectedGroupIds([]);
         } catch (error) {
             console.error('Error assigning sections:', error);
-            alert('Failed to assign sections.');
+            setNotification({ message: 'Failed to assign sections. Please try again.', type: 'error' });
         }
     };
 
@@ -347,9 +354,15 @@ const RecordList = ({ role = "USER", filter = "ALL" }) => {
             applyFilters(updated, subFilter);
 
             logActivity('Status Update', `${newStatus} communication ID: ${id}`, role, 'Records');
+
+            if (newStatus === 'APPROVED') {
+                setNotification({ message: 'Communication successfully sent to personnel.', type: 'success' });
+            } else if (newStatus === 'COMPLETED') {
+                setNotification({ message: 'Task marked as completed successfully.', type: 'success' });
+            }
         } catch (error) {
             console.error('Error updating status:', error);
-            alert('Failed to update status. Please try again.');
+            setNotification({ message: 'Failed to update status. Please try again.', type: 'error' });
         }
     };
 
@@ -435,7 +448,7 @@ const RecordList = ({ role = "USER", filter = "ALL" }) => {
             logActivity('Batch Status Update', `Mass ${status} for ${selectedRecords.length} records`, role, 'Records');
         } catch (error) {
             console.error(error);
-            alert('Batch update failed');
+            setNotification({ message: 'Batch update failed. Please try again.', type: 'error' });
         } finally {
             setIsUpdatingBatch(false);
         }
@@ -532,14 +545,14 @@ const RecordList = ({ role = "USER", filter = "ALL" }) => {
             fetchRecords();
         } catch (error) {
             console.error('Error updating status:', error);
-            alert(error.message);
+            setNotification({ message: error.message || 'Failed to update record.', type: 'error' });
         }
     };
 
     const handleCompletionSubmit = async () => {
         if (!completionRecord) return;
         if (completionFiles.length === 0) {
-            alert('Please upload at least one attachment as proof of completion.');
+            setNotification({ message: 'Please upload at least one attachment as proof of completion.', type: 'error' });
             return;
         }
 
@@ -1041,7 +1054,7 @@ const RecordList = ({ role = "USER", filter = "ALL" }) => {
 
 
                                                 {/* Division Head Actions */}
-                                                {hasPermission('div_head_review') && 
+                                                {hasPermission('review_communication') && currentUser?.role !== 'Admin Section' && 
                                                  (['PENDING', 'PENDING_DIV_HEAD', 'PENDING_DIV_APPROVAL'].includes(record.status)) && (
                                                     <div className="detail-info-item full">
                                                         <label>Division Head Review</label>
@@ -1051,7 +1064,7 @@ const RecordList = ({ role = "USER", filter = "ALL" }) => {
                                                         <div className="admin-actions-group">
                                                             <button className="admin-btn approve" onClick={() => handleDivReview(record.id, record.status === 'PENDING_DIV_APPROVAL' ? 'APPROVE_INTERNAL' : 'ACCEPT')}>
                                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                                                {record.status === 'PENDING_DIV_APPROVAL' ? 'APPROVE REQUEST' : 'ACCEPT'}
+                                                                {record.status === 'PENDING_DIV_APPROVAL' ? 'APPROVE & ROUTE' : 'ACCEPT & ROUTE'}
                                                             </button>
                                                             <button className="admin-btn decline" onClick={() => handleDivReview(record.id, 'DECLINE')}>
                                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -1070,7 +1083,7 @@ const RecordList = ({ role = "USER", filter = "ALL" }) => {
                                                 )}
 
                                                 {/* Division Head only: Section Assignment */}
-                                                {(hasPermission('div_head_review') || isAdmin) && 
+                                                {(hasPermission('review_communication') || isAdmin) && currentUser?.role !== 'Admin Section' && 
                                                  (['DIV_ACCEPTED', 'PENDING', 'PENDING_DIV_HEAD', 'PENDING_DIV_APPROVAL'].includes(record.status)) && (
                                                     <div className="detail-info-item full">
                                                         <label>Section Assignment Required</label>
@@ -1088,27 +1101,30 @@ const RecordList = ({ role = "USER", filter = "ALL" }) => {
                                                 )}
 
                                                 {/* Section Head Actions: Needs approve/decline/return perms AND must be the designated head (or Master Admin) */}
-                                                {(hasPermission('approve_record') || hasPermission('decline_record') || hasPermission('return_record')) && 
+                                                {(hasPermission('approve_record') || hasPermission('decline_record') || hasPermission('return_record') || currentUser?.role === 'Section Head') && 
                                                  (record.status === 'READY FOR ARCHIVING' || record.status === 'PENDING' || record.status === 'RETURNED' || record.status === 'PENDING_SECTION_HEAD') && 
                                                  (isAdmin || 
-                                                  (record.sectionHeadId && parseInt(record.sectionHeadId) === currentUser?.id) ||
-                                                  (record.AssignedSections?.some(s => s.headId === currentUser?.id))) && (
+                                                  ((record.sectionHeadId && parseInt(record.sectionHeadId) === currentUser?.id) ||
+                                                   (record.AssignedSections?.some(s => s.headId === currentUser?.id)))) && currentUser?.role !== 'Admin Section' && (
                                                     <div className="detail-info-item full">
                                                         <label>{isAdmin ? 'Administrator Actions' : 'Section Head Actions'}</label>
+                                                        <p className="details-text" style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '12px' }}>
+                                                             {record.status === 'PENDING_SECTION_HEAD' && "Step 1: Assign personnel below. Step 2: Click ACCEPT & SEND TO USER to finalize and notify the assigned personnel."}
+                                                         </p>
                                                         <div className="admin-actions-group">
-                                                            {hasPermission('approve_record') && (
+                                                            {(hasPermission('approve_record') || currentUser?.role === 'Section Head') && (
                                                                 <button
                                                                     className={`admin-btn approve ${record.status === 'APPROVED' ? 'active' : ''}`}
                                                                     onClick={() => handleStatusUpdate(record.id, 'APPROVED')}
-                                                                    disabled={record.status === 'APPROVED' || record.status === 'RETURNED'}
+                                                                    disabled={record.status === 'APPROVED'}
                                                                 >
                                                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                                                                         <polyline points="20 6 9 17 4 12"></polyline>
                                                                     </svg>
-                                                                    APPROVE
+                                                                     {record.status === 'PENDING_SECTION_HEAD' ? 'ACCEPT & SEND TO USER' : 'APPROVE'}
                                                                 </button>
                                                             )}
-                                                            {hasPermission('decline_record') && (
+                                                            {(hasPermission('decline_record') || currentUser?.role === 'Section Head') && (
                                                                 <button
                                                                     className={`admin-btn decline ${record.status === 'DECLINED' ? 'active' : ''}`}
                                                                     onClick={() => handleStatusUpdate(record.id, 'DECLINED')}
@@ -1121,7 +1137,7 @@ const RecordList = ({ role = "USER", filter = "ALL" }) => {
                                                                     DECLINE
                                                                 </button>
                                                             )}
-                                                            {hasPermission('return_record') && (
+                                                            {(hasPermission('return_record') || currentUser?.role === 'Section Head') && (
                                                                 <button
                                                                     className={`admin-btn return ${record.status === 'RETURNED' ? 'active' : ''}`}
                                                                     onClick={() => openReturnModal(record)}
@@ -1426,7 +1442,7 @@ const RecordList = ({ role = "USER", filter = "ALL" }) => {
                                     </button>
                                     <button type="submit" className="premium-btn-primary">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                                        {hasPermission('div_head_review') && (editingRecord?.status === 'PENDING_DIV_HEAD' || editingRecord?.status === 'PENDING_DIV_APPROVAL') ? 'SAVE CHANGES' : 'RESUBMIT FOR REVIEW'}
+                                        {hasPermission('review_communication') && (editingRecord?.status === 'PENDING_DIV_HEAD' || editingRecord?.status === 'PENDING_DIV_APPROVAL') ? 'SAVE CHANGES' : 'RESUBMIT FOR REVIEW'}
                                     </button>
                                 </div>
                             </form>
@@ -1628,6 +1644,46 @@ const RecordList = ({ role = "USER", filter = "ALL" }) => {
                                 onClick={() => handleAssignSections(recordToAssignSection.id, selectedGroupIds)}
                             >
                                 CONFIRM ASSIGNMENT
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {notification && createPortal(
+                <div className="modern-overlay animate-fade-in" onClick={() => setNotification(null)}>
+                    <div className="modern-modal clean-white-modal animate-zoom-in" style={{ maxWidth: '400px', width: '90%', padding: '30px' }} onClick={e => e.stopPropagation()}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                            <div className={`modal-icon-wrapper ${notification.type === 'error' ? 'error-icon' : 'success-icon'}`} style={{ 
+                                width: '64px', 
+                                height: '64px', 
+                                borderRadius: '50%', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center',
+                                background: notification.type === 'error' ? '#fef2f2' : '#f0fdf4',
+                                color: notification.type === 'error' ? '#ef4444' : '#22c55e',
+                                marginBottom: '20px'
+                            }}>
+                                {notification.type === 'error' ? (
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                                ) : (
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                )}
+                            </div>
+                            <h3 style={{ margin: '0 0 10px 0', fontSize: '1.25rem', fontWeight: 800, color: notification.type === 'error' ? '#ef4444' : 'var(--primary-gold)' }}>
+                                {notification.type === 'error' ? 'Oops!' : 'Success!'}
+                            </h3>
+                            <p style={{ margin: 0, color: 'var(--primary-navy)', fontSize: '14px', lineHeight: '1.6', fontWeight: 600 }}>
+                                {notification.message}
+                            </p>
+                            <button 
+                                className="premium-btn-primary" 
+                                style={{ marginTop: '30px', width: '100%', background: notification.type === 'error' ? '#ef4444' : 'var(--primary-navy)' }} 
+                                onClick={() => setNotification(null)}
+                            >
+                                GOT IT
                             </button>
                         </div>
                     </div>

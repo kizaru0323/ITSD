@@ -56,7 +56,7 @@ const UserDashboard = () => {
   return (
     <UserLayout
       title={`Welcome Back, ${currentUser?.name || "User"}`}
-      subtitle="Track your communications and system activities in real-time."
+      subtitle={`System Role: ${currentUser?.role || "User"} | Track your communications and activities in real-time.`}
       permissionRequired="view_dashboard"
     >
       <div className="user-dashboard-container animate-fade-in">

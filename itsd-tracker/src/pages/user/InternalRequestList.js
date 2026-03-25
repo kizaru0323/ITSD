@@ -33,8 +33,8 @@ const InternalRequestList = () => {
 
     useEffect(() => {
         const userRole = user?.role?.toLowerCase() || '';
-        setIsSectionHead(userRole === 'section head' || user?.roleId === 6);
-        setIsDivHead(userRole === 'division head' || user?.roleId === 7);
+        setIsSectionHead(userRole === 'section head' || user?.role === 'Section Head');
+        setIsDivHead(userRole === 'division head' || user?.role === 'Division Head');
         fetchRequests();
     }, [user, fetchRequests]);
 

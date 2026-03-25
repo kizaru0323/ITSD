@@ -16,6 +16,16 @@ const SharedSettings = ({ role = 'USER' }) => {
     const [previewUrl, setPreviewUrl] = useState(null);
     const fileInputRef = useRef(null);
     const [showImageModal, setShowImageModal] = useState(false);
+    
+    // Custom Input Modal state
+    const [showInputModal, setShowInputModal] = useState(false);
+    const [modalConfig, setModalConfig] = useState({ title: '', fields: [], callback: null });
+    const [modalValues, setModalValues] = useState({});
+    const [modalError, setModalError] = useState('');
+
+    // Custom Confirm Modal state
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [confirmConfig, setConfirmConfig] = useState({ title: '', message: '', onConfirm: null });
 
     const handleAvatarClick = () => {
         if (isEditingProfile) {
@@ -172,23 +182,25 @@ const SharedSettings = ({ role = 'USER' }) => {
     };
 
     const handleDeleteRole = async (roleId) => {
-        if (!window.confirm('Are you sure you want to delete this role?')) return;
-        try {
-            const token = sessionStorage.getItem('itsd_auth_token');
-            const response = await fetch(`${API_BASE_URL}/api/roles/${roleId}`, { 
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.ok) {
-                fetchRBACData();
-            } else {
-                const data = await response.json();
-                setErrorMsg(data.error || 'Failed to delete role');
-                setTimeout(() => setErrorMsg(''), 3000);
+        setConfirmConfig({
+            title: 'Delete Role',
+            message: 'Are you sure you want to delete this role? This action cannot be undone.',
+            onConfirm: async () => {
+                const token = sessionStorage.getItem('itsd_auth_token');
+                const response = await fetch(`${API_BASE_URL}/api/roles/${roleId}`, { 
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    fetchRBACData();
+                } else {
+                    const data = await response.json();
+                    setErrorMsg(data.error || 'Failed to delete role');
+                    setTimeout(() => setErrorMsg(''), 3000);
+                }
             }
-        } catch (error) {
-            console.error('Error deleting role:', error);
-        }
+        });
+        setShowConfirmModal(true);
     };
 
     const showSaved = async () => {
@@ -699,18 +711,24 @@ const SharedSettings = ({ role = 'USER' }) => {
                                         </div>
                                     ))}
                                     <button className="add-role-btn-subtle" onClick={() => {
-                                        const name = window.prompt('Enter new role name:');
-                                        if (name) {
-                                            const token = sessionStorage.getItem('itsd_auth_token');
-                                            fetch(`${API_BASE_URL}/api/roles`, {
-                                                method: 'POST',
-                                                headers: { 
-                                                    'Content-Type': 'application/json',
-                                                    'Authorization': `Bearer ${token}`
-                                                },
-                                                body: JSON.stringify({ name, description: '' })
-                                            }).then(() => fetchRBACData());
-                                        }
+                                        setModalConfig({
+                                            title: 'Create New Role',
+                                            fields: [{ name: 'name', label: 'Role Name', placeholder: 'e.g. Moderator' }],
+                                            callback: (values) => {
+                                                const token = sessionStorage.getItem('itsd_auth_token');
+                                                return fetch(`${API_BASE_URL}/api/roles`, {
+                                                    method: 'POST',
+                                                    headers: { 
+                                                        'Content-Type': 'application/json',
+                                                        'Authorization': `Bearer ${token}`
+                                                    },
+                                                    body: JSON.stringify({ name: values.name, description: '' })
+                                                }).then(() => fetchRBACData());
+                                            }
+                                        });
+                                        setModalValues({});
+                                        setModalError('');
+                                        setShowInputModal(true);
                                     }}>
                                         + Add New Role
                                     </button>
@@ -732,7 +750,7 @@ const SharedSettings = ({ role = 'USER' }) => {
                                                     {isSavingRBAC ? 'Saving...' : 'Save Changes'}
                                                 </button>
                                             </div>
-                                            <div className="permissions-grid-scroll">
+                                            <div className="permissions-grid-scroll" key={selectedRole.id}>
                                                 {(allPermissions || []).map(perm => (
                                                     <label key={perm.id} className="permission-checkbox-item">
                                                         <input
@@ -783,14 +801,19 @@ const SharedSettings = ({ role = 'USER' }) => {
                                                 <td>{perm.category}</td>
                                                 <td>
                                                     <button className="rbac-delete-btn" onClick={() => {
-                                                        if (window.confirm('Delete this permission?')) {
-                                                            const token = sessionStorage.getItem('itsd_auth_token');
-                                                            fetch(`${API_BASE_URL}/api/permissions/${perm.id}`, { 
-                                                                method: 'DELETE',
-                                                                headers: { 'Authorization': `Bearer ${token}` }
-                                                            })
-                                                                .then(() => fetchRBACData());
-                                                        }
+                                                        setConfirmConfig({
+                                                            title: 'Delete Permission',
+                                                            message: 'Are you sure you want to delete this permission? This may affect roles using it.',
+                                                            onConfirm: async () => {
+                                                                const token = sessionStorage.getItem('itsd_auth_token');
+                                                                await fetch(`${API_BASE_URL}/api/permissions/${perm.id}`, { 
+                                                                    method: 'DELETE',
+                                                                    headers: { 'Authorization': `Bearer ${token}` }
+                                                                });
+                                                                fetchRBACData();
+                                                            }
+                                                        });
+                                                        setShowConfirmModal(true);
                                                     }}>Delete</button>
                                                 </td>
                                             </tr>
@@ -798,19 +821,27 @@ const SharedSettings = ({ role = 'USER' }) => {
                                     </tbody>
                                 </table>
                                 <button className="add-perm-btn-large" onClick={() => {
-                                    const name = window.prompt('Permission Name:');
-                                    const slug = window.prompt('Permission Slug:');
-                                    if (name && slug) {
-                                        const token = sessionStorage.getItem('itsd_auth_token');
-                                        fetch(`${API_BASE_URL}/api/permissions`, {
-                                            method: 'POST',
-                                            headers: { 
-                                                'Content-Type': 'application/json',
-                                                'Authorization': `Bearer ${token}`
-                                            },
-                                            body: JSON.stringify({ name, slug, category: 'System' })
-                                        }).then(() => fetchRBACData());
-                                    }
+                                    setModalConfig({
+                                        title: 'Create System Permission',
+                                        fields: [
+                                            { name: 'name', label: 'Permission Name', placeholder: 'e.g. View Audits' },
+                                            { name: 'slug', label: 'Permission Slug', placeholder: 'e.g. view_audits' }
+                                        ],
+                                        callback: (values) => {
+                                            const token = sessionStorage.getItem('itsd_auth_token');
+                                            return fetch(`${API_BASE_URL}/api/permissions`, {
+                                                method: 'POST',
+                                                headers: { 
+                                                    'Content-Type': 'application/json',
+                                                    'Authorization': `Bearer ${token}`
+                                                },
+                                                body: JSON.stringify({ name: values.name, slug: values.slug, category: 'System' })
+                                            }).then(() => fetchRBACData());
+                                        }
+                                    });
+                                    setModalValues({});
+                                    setModalError('');
+                                    setShowInputModal(true);
                                 }}>+ Add New Permission</button>
                             </div>
                         </div>
@@ -855,6 +886,77 @@ const SharedSettings = ({ role = 'USER' }) => {
                             alt="Full Profile"
                             className="full-avatar-image"
                         />
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {/* Premium Input Modal */}
+            {showInputModal && createPortal(
+                <div className="modern-overlay animate-fade-in" onClick={() => setShowInputModal(false)}>
+                    <div className="modern-modal-fixed rbac-modal" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header-premium">
+                            <h3>{modalConfig.title}</h3>
+                            <button className="modal-close-btn" onClick={() => setShowInputModal(false)}>✕</button>
+                        </div>
+                        <div className="modal-body-premium">
+                            {modalConfig.fields.map(field => (
+                                <div key={field.name} className="modal-field-group">
+                                    <label>{field.label}</label>
+                                    <input 
+                                        className="modal-premium-input"
+                                        placeholder={field.placeholder}
+                                        value={modalValues[field.name] || ''}
+                                        onChange={e => setModalValues({ ...modalValues, [field.name]: e.target.value })}
+                                        autoFocus={modalConfig.fields.indexOf(field) === 0}
+                                    />
+                                </div>
+                            ))}
+                            {modalError && <p className="modal-error-text">{modalError}</p>}
+                        </div>
+                        <div className="modal-footer-premium">
+                            <button className="modal-btn-cancel" onClick={() => setShowInputModal(false)}>Cancel</button>
+                            <button className="modal-btn-confirm" onClick={async () => {
+                                // Validation
+                                if (modalConfig.fields.some(f => !modalValues[f.name])) {
+                                    setModalError('Please fill in all fields.');
+                                    return;
+                                }
+                                try {
+                                    await modalConfig.callback(modalValues);
+                                    setShowInputModal(false);
+                                } catch (err) {
+                                    setModalError(err.message || 'Operation failed.');
+                                }
+                            }}>Create Now</button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {/* Premium Confirm Modal */}
+            {showConfirmModal && createPortal(
+                <div className="modern-overlay animate-fade-in" onClick={() => setShowConfirmModal(false)}>
+                    <div className="modern-modal-fixed confirm-modal" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header-premium danger">
+                            <h3>{confirmConfig.title}</h3>
+                            <button className="modal-close-btn" onClick={() => setShowConfirmModal(false)}>✕</button>
+                        </div>
+                        <div className="modal-body-premium">
+                            <p className="confirm-message">{confirmConfig.message}</p>
+                        </div>
+                        <div className="modal-footer-premium">
+                            <button className="modal-btn-cancel" onClick={() => setShowConfirmModal(false)}>Cancel</button>
+                            <button className="modal-btn-confirm danger" onClick={async () => {
+                                try {
+                                    await confirmConfig.onConfirm();
+                                    setShowConfirmModal(false);
+                                } catch (err) {
+                                    setErrorMsg(err.message || 'Action failed.');
+                                }
+                            }}>Yes, Delete</button>
+                        </div>
                     </div>
                 </div>,
                 document.body

@@ -27,7 +27,7 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         defaultValue: 'user',
         validate: {
-            isIn: [['Admin', 'Users', 'Administrative', 'Admin Section', 'Section Head', 'Division Head', 'admin', 'user', 'admin section']]
+            isIn: [['Admin', 'User', 'Users', 'Administrative', 'Admin Section', 'Section Head', 'Division Head', 'admin', 'user', 'admin section', 'System']]
         }
     },
     roleId: {

@@ -16,7 +16,7 @@ const InternalRequestDetailModal = ({ request, user, onClose, onUpdate }) => {
     const [showAttachment, setShowAttachment] = useState(false);
     
     const userRole = user?.role?.toLowerCase() || '';
-    const isDivHead = userRole === 'division head' || user?.roleId === 7;
+    const isDivHead = userRole === 'division head' || user?.role === 'Division Head';
     const isOwner = request.userId === user?.id;
 
     useEffect(() => {

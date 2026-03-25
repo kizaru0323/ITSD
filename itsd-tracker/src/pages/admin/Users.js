@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import AdminLayout from '../../layouts/AdminLayout';
 import Pagination from '../../components/Pagination';
 import { API_BASE_URL } from '../../apiConfig';
+import UserPermissionsModal from '../../components/UserPermissionsModal';
 import './Users.css';
 
 const YEARS = ['All', '2025', '2026'];
@@ -42,6 +43,8 @@ const AdminUsers = () => {
     const [formError, setFormError] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [showFilterPanel, setShowFilterPanel] = useState(false);
+    const [showPermissionsModal, setShowPermissionsModal] = useState(false);
+    const [userForPermissions, setUserForPermissions] = useState(null);
     const ITEMS_PER_PAGE = 8;
 
     useEffect(() => {
@@ -509,6 +512,20 @@ const AdminUsers = () => {
                                                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                                                 </svg>
                                             </button>
+                                            <button
+                                                className="pu-action-btn permissions"
+                                                onClick={() => {
+                                                    setUserForPermissions(user);
+                                                    setShowPermissionsModal(true);
+                                                }}
+                                                title="Adjust specific permissions"
+                                                style={{ color: '#6366f1' }}
+                                            >
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                                    <path d="M12 8v4" /><path d="M12 16h.01" />
+                                                </svg>
+                                            </button>
                                             {user.status === 'archived' && (
                                                 <button
                                                     className="pu-action-btn restore"
@@ -799,17 +816,29 @@ const AdminUsers = () => {
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                                         <circle cx="12" cy="12" r="10"></circle><path d="M12 16V12"></path><path d="M12 8h.01"></path>
                                     </svg>
-                                    <span>User will lose system access until re-enabled.</span>
+                                    <span>Account will be disabled immediately.</span>
                                 </div>
                             </div>
                         </div>
 
                         <div className="modern-modal-footer">
                             <button className="pu-btn-v2 secondary" onClick={() => setShowConfirmDeactivate(false)}>Cancel</button>
-                            <button className="pu-btn-v2" style={{ background: '#f59e0b', color: 'white' }} onClick={executeDeactivate}>Deactivate User</button>
+                            <button className="pu-btn-v2" style={{ background: '#f59e0b', color: 'white' }} onClick={executeDeactivate}>Deactivate</button>
                         </div>
                     </div>
                 </div>,
+                document.body
+            )}
+
+            {showPermissionsModal && userForPermissions && createPortal(
+                <UserPermissionsModal
+                    user={userForPermissions}
+                    onClose={() => setShowPermissionsModal(false)}
+                    onSave={() => {
+                        setShowPermissionsModal(false);
+                        fetchUsers();
+                    }}
+                />,
                 document.body
             )}
         </AdminLayout>
